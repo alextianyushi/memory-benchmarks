@@ -172,7 +172,7 @@ class Mem0Client:
                 return {"results": []}
 
             except Exception as exc:
-                logger.warning("ADD attempt %d/%d failed (user=%s): %s", attempt + 1, self.max_retries, user_id, str(exc)[:200])
+                logger.warning("ADD attempt %d/%d failed (user=%s): %s", attempt + 1, self.max_retries, user_id, str(exc)[:600])
                 if attempt < self.max_retries - 1:
                     await asyncio.sleep(self.retry_delay * (attempt + 1))
                 else:
@@ -205,8 +205,10 @@ class Mem0Client:
         for attempt in range(self.max_retries):
             try:
                 async with self.limiter:
-                    async with session.post(f"{self.host}/v3/memories/", json=payload) as resp:
-                        resp.raise_for_status()
+                    async with session.post(f"{self.host}/v3/memories/add/", json=payload) as resp:
+                        if resp.status >= 400:
+                            body = await resp.text()
+                            raise RuntimeError(f"HTTP {resp.status} from {resp.url}: {body[:500]}")
                         resp_data = await resp.json()
 
                 event_id = resp_data.get("event_id")
@@ -227,7 +229,7 @@ class Mem0Client:
                 return {"results": self._parse_event_results(event_data)}
 
             except Exception as exc:
-                logger.warning("ADD attempt %d/%d failed (user=%s): %s", attempt + 1, self.max_retries, user_id, str(exc)[:200])
+                logger.warning("ADD attempt %d/%d failed (user=%s): %s", attempt + 1, self.max_retries, user_id, str(exc)[:600])
                 if attempt < self.max_retries - 1:
                     await asyncio.sleep(self.retry_delay * (attempt + 1))
                 else:
@@ -305,7 +307,7 @@ class Mem0Client:
                 return normalised
 
             except Exception as exc:
-                logger.warning("SEARCH attempt %d/%d failed (user=%s): %s", attempt + 1, self.max_retries, user_id, str(exc)[:200])
+                logger.warning("SEARCH attempt %d/%d failed (user=%s): %s", attempt + 1, self.max_retries, user_id, str(exc)[:600])
                 if attempt < self.max_retries - 1:
                     await asyncio.sleep(self.retry_delay * (attempt + 1))
                 else:
@@ -328,7 +330,9 @@ class Mem0Client:
             try:
                 async with self.limiter:
                     async with session.post(f"{self.host}/v3/memories/search/", json=payload) as resp:
-                        resp.raise_for_status()
+                        if resp.status >= 400:
+                            body = await resp.text()
+                            raise RuntimeError(f"HTTP {resp.status} from {resp.url}: {body[:500]}")
                         resp_data = await resp.json()
 
                 results = resp_data.get("results", []) if isinstance(resp_data, dict) else resp_data
@@ -336,7 +340,7 @@ class Mem0Client:
                 return results
 
             except Exception as exc:
-                logger.warning("SEARCH attempt %d/%d failed (user=%s): %s", attempt + 1, self.max_retries, user_id, str(exc)[:200])
+                logger.warning("SEARCH attempt %d/%d failed (user=%s): %s", attempt + 1, self.max_retries, user_id, str(exc)[:600])
                 if attempt < self.max_retries - 1:
                     await asyncio.sleep(self.retry_delay * (attempt + 1))
                 else:

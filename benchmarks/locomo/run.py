@@ -707,6 +707,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--categories", default="1,2,3,4", help="Comma-separated categories")
     parser.add_argument("--with-evidence", action="store_true", help="Pass evidence to judge")
     parser.add_argument("--user-profile", action="store_true", help="Fetch user profiles")
+    parser.add_argument("--chunk-size", type=int, default=CHUNK_SIZE,
+                        help="Dialogue turns per Mem0 add call (default 1 = official setting; larger is faster for smoke tests)")
     parser.add_argument("--max-questions", type=int, default=None, help="Max questions to process (for quick testing)")
     parser.add_argument("--rpm", type=int, default=200, help="Requests per minute for LLM")
     parser.add_argument("--backend", default="oss", choices=["oss", "cloud"],
@@ -724,7 +726,9 @@ def parse_args() -> argparse.Namespace:
 
 
 async def async_main() -> None:
+    global CHUNK_SIZE
     args = parse_args()
+    CHUNK_SIZE = max(1, args.chunk_size)
     logger = setup_logging("locomo", debug=args.debug)
 
     cutoffs = parse_cutoffs(args.top_k_cutoffs)

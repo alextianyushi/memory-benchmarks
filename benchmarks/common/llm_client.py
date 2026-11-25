@@ -138,7 +138,7 @@ class LLMClient:
         system: str,
         user: str,
         temperature: float = 0,
-        max_tokens: int = 4096,
+        max_tokens: int | None = None,
     ) -> str:
         """Generate a text response.
 
@@ -151,6 +151,8 @@ class LLMClient:
         Returns:
             Generated text string.
         """
+        if max_tokens is None:
+            max_tokens = int(os.getenv("LLM_MAX_TOKENS", "4096"))
         if self.provider == "anthropic":
             return await self._generate_anthropic(system, user, temperature, max_tokens)
         return await self._generate_openai(system, user, temperature, max_tokens)
@@ -174,10 +176,10 @@ class LLMClient:
                         timeout=self.timeout,
                     )
                 content = resp.choices[0].message.content
-                if content is None:
+                if content is None or not content.strip():
                     logger.warning(
-                        "Generation returned None (finish_reason=%s)",
-                        resp.choices[0].finish_reason,
+                        "Generation returned empty content (finish_reason=%s, attempt %d/%d)",
+                        resp.choices[0].finish_reason, attempt + 1, self.max_retries,
                     )
                     if attempt < self.max_retries - 1:
                         await asyncio.sleep(2 * (attempt + 1))
@@ -228,7 +230,7 @@ class LLMClient:
         user: str,
         response_format: type[T] | None = None,
         temperature: float = 0,
-        max_tokens: int = 4096,
+        max_tokens: int | None = None,
     ) -> Any:
         """Generate a structured response.
 
@@ -245,6 +247,8 @@ class LLMClient:
         Returns:
             Parsed dict or Pydantic model instance.
         """
+        if max_tokens is None:
+            max_tokens = int(os.getenv("LLM_MAX_TOKENS", "4096"))
         if self.provider == "anthropic":
             return await self._generate_structured_anthropic(system, user, response_format, temperature, max_tokens)
         return await self._generate_structured_openai(system, user, response_format, temperature, max_tokens)
