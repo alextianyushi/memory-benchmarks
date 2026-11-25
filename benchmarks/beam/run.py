@@ -897,9 +897,9 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--project-name", required=True, help="Name for this eval run")
     parser.add_argument(
-        "--answerer-model", default="gpt-5", help="Model for answer generation"
+        "--answerer-model", default=os.getenv("ANSWERER_MODEL", "gpt-5"), help="Model for answer generation"
     )
-    parser.add_argument("--judge-model", default="gpt-5", help="Model for rubric judging")
+    parser.add_argument("--judge-model", default=os.getenv("JUDGE_MODEL", "gpt-5"), help="Model for rubric judging")
     parser.add_argument(
         "--provider", default="openai", help="LLM provider (openai, anthropic, azure)"
     )

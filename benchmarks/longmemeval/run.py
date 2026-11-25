@@ -940,11 +940,11 @@ def parse_args() -> argparse.Namespace:
         help="Name for this eval run",
     )
     parser.add_argument(
-        "--answerer-model", default="gpt-5",
+        "--answerer-model", default=os.getenv("ANSWERER_MODEL", "gpt-5"),
         help="Model for answer generation",
     )
     parser.add_argument(
-        "--judge-model", default="gpt-5",
+        "--judge-model", default=os.getenv("JUDGE_MODEL", "gpt-5"),
         help="Model for judging",
     )
     parser.add_argument(
